@@ -1,9 +1,10 @@
 "use client";
 
 import { challengeOptions, challenges } from "@/db/schema";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Header } from "./header";
 import { QuestionBubble } from "./question-bubble";
+import { Challenge } from "./challenge";
 
 type props = {
   initialLessonId: number;
@@ -21,6 +22,7 @@ export const Quiz = ({
   initialHearts,
   initialPercentage,
 }: props) => {
+  const [pending, startTransition] = useTransition();
   const [lessonId] = useState(initialLessonId);
   const [hearts, setHearts] = useState(initialHearts);
   const [percentage, setPercentage] = useState(() =>
@@ -39,6 +41,12 @@ export const Quiz = ({
     challenge.type === "ASSIST"
       ? "Select the correct meaning"
       : challenge.question;
+  const [selectedOption, setSelectedOption] = useState<number>();
+  const [status, setStatus] = useState<"correct" | "wrong" | "none">("none");
+  const onSelect = (id: number) => {
+    if (status !== "none") return;
+    setSelectedOption(id);
+  };
   return (
     <>
       <Header
@@ -57,7 +65,14 @@ export const Quiz = ({
               {challenge.type === "ASSIST" && (
                 <QuestionBubble question={challenge.question} />
               )}
-              {/* <Challenge options={options} onSelect={onSelect} status={status} selectedOption={selectedOption} disabled={pending} type={challenge.type}  /> */}
+              <Challenge
+                options={options}
+                onSelect={onSelect}
+                status={status}
+                selectedOption={selectedOption}
+                disabled={pending}
+                type={challenge.type}
+              />
             </div>
           </div>
         </div>
