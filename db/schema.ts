@@ -6,6 +6,7 @@ import {
   pgTable,
   serial,
   text,
+  timestamp,
 } from "drizzle-orm/pg-core";
 
 export const courses = pgTable("courses", {
@@ -44,6 +45,8 @@ export const lessons = pgTable("lessons", {
     .notNull(),
   order: integer("order").notNull(),
 });
+
+
 export const lessonsRelations = relations(lessons, ({ one, many }) => ({
   unit: one(units, {
     fields: [lessons.unitId],
@@ -51,7 +54,10 @@ export const lessonsRelations = relations(lessons, ({ one, many }) => ({
   }),
   challenges: many(challenges),
 }));
+
+
 export const challengesEnum = pgEnum("type", ["SELECT", "ASSIST"]);
+
 export const challenges = pgTable("challenges", {
   id: serial("id").primaryKey(),
   lessonId: integer("lesson_id")
@@ -63,12 +69,13 @@ export const challenges = pgTable("challenges", {
 });
 export const challengesRelations = relations(challenges, ({ one, many }) => ({
   lesson: one(lessons, {
-    fields: [challenges.id],
+    fields: [challenges.lessonId],
     references: [lessons.id],
   }),
   challengeOptions: many(challengeOptions),
   challengeProgress: many(challengeProgress),
 }));
+
 export const challengeOptions = pgTable("challenge_options", {
   id: serial("id").primaryKey(),
   text: text("text").notNull(),
@@ -79,6 +86,7 @@ export const challengeOptions = pgTable("challenge_options", {
     .references(() => challenges.id, { onDelete: "cascade" })
     .notNull(),
 });
+
 export const challengeOptionsRelations = relations(
   challengeOptions,
   ({ one }) => ({
@@ -88,6 +96,7 @@ export const challengeOptionsRelations = relations(
     }),
   })
 );
+
 export const challengeProgress = pgTable("challenge_progress", {
   id: serial("id").notNull(),
   userId: text("user_id").notNull(),
@@ -96,6 +105,7 @@ export const challengeProgress = pgTable("challenge_progress", {
     .notNull(),
   completed: boolean("completed").notNull().default(false),
 });
+
 export const challengeProgressRelations = relations(
   challengeProgress,
   ({ one }) => ({
@@ -105,7 +115,8 @@ export const challengeProgressRelations = relations(
     }),
   })
 );
-export const userProgress = pgTable("userProgress", {
+
+export const userProgress = pgTable("user_progress", {
   userId: text("user_id").primaryKey(),
   userName: text("user_name").notNull().default("User"),
   userImageSrc: text("user_image_src").notNull().default("/mascot.svg"),
@@ -122,3 +133,12 @@ export const userProgressRelations = relations(userProgress, ({ one }) => ({
     references: [courses.id],
   }),
 }));
+
+export const userSubscription = pgTable("user_subscription", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().unique(),
+  stripeCustomerId: text("stripe_customer_id").notNull().unique(),
+  stripeSubscriptionId: text("stripe_subscription_id").notNull().unique(),
+  stripePriceId: text("stripe_price_id").notNull(),
+  stripeCurrentPeriodEnd: timestamp("stripe_current_period_end").notNull(),
+});

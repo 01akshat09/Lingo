@@ -8,8 +8,10 @@ import {
   lessons,
   units,
   userProgress,
+  userSubscription,
 } from "./schema";
 
+const DAYS_IN_MS = 86_400_000;
 export const getCourses = cache(async () => {
   const data = await db.query.courses.findMany();
   return data;
@@ -32,7 +34,16 @@ export const getUserProgress = cache(async () => {
 export const getCourseById = cache(async (courseId: number) => {
   const data = await db.query.courses.findFirst({
     where: eq(courses.id, courseId),
-    // TODO
+    with: {
+      units: {
+        orderBy: (units, { asc }) => [asc(units.order)],
+        with: {
+          lessons: {
+            orderBy: (lessons, { asc }) => [asc(lessons.order)],
+          },
+        },
+      },
+    },
   });
   return data;
 });
@@ -130,18 +141,15 @@ export const getCourseProgress = cache(async () => {
     activeLessonId: firstUncompletedLesson?.id,
   };
 });
-
 export const getLesson = cache(async (id?: number) => {
-  const { userId } = await auth();
-  if (!userId) {
-    return null;
-  }
+  const { userId } = auth();
 
-  const coursePorgress = await getCourseProgress();
-  const lessonId = id || coursePorgress?.activeLessonId;
-  if (!lessonId) {
-    return null;
-  }
+  if (!userId) return null;
+
+  const courseProgress = await getCourseProgress();
+  const lessonId = id || courseProgress?.activeLessonId;
+
+  if (!lessonId) return null;
 
   const data = await db.query.lessons.findFirst({
     where: eq(lessons.id, lessonId),
@@ -157,17 +165,18 @@ export const getLesson = cache(async (id?: number) => {
       },
     },
   });
-  if (!data || !data.challenges) {
-    return null;
-  }
+
+  if (!data || !data.challenges) return null;
 
   const normalizedChallenges = data.challenges.map((challenge) => {
     const completed =
       challenge.challengeProgress &&
       challenge.challengeProgress.length > 0 &&
       challenge.challengeProgress.every((progress) => progress.completed);
+
     return { ...challenge, completed };
   });
+
   return { ...data, challenges: normalizedChallenges };
 });
 
@@ -177,7 +186,7 @@ export const getLessonPercentage = cache(async () => {
   if (!coursePorgress?.activeLessonId) {
     return 0;
   }
-  const lesson = await getLesson(coursePorgress.activeLessonId);
+  const lesson = await getLesson(coursePorgress?.activeLessonId);
   if (!lesson) {
     return 0;
   }
@@ -207,4 +216,23 @@ export const getTopTenUsers = cache(async () => {
     },
   });
   return data;
+});
+
+export const getUserSubscription = cache(async () => {
+  const { userId } = await auth();
+  if (!userId) return null;
+
+  const data = await db.query.userSubscription.findFirst({
+    where: eq(userSubscription.userId, userId),
+  });
+
+  if (!data) return null;
+  const isActive =
+    data.stripePriceId &&
+    data.stripeCurrentPeriodEnd?.getTime() + DAYS_IN_MS > Date.now();
+
+  return {
+    ...data,
+    isActive: !!isActive,
+  };
 });

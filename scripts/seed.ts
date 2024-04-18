@@ -14,6 +14,7 @@ const main = async () => {
     await db.delete(schema.lessons);
     await db.delete(schema.units);
     await db.delete(schema.challenges);
+    await db.delete(schema.userSubscription);
 
     await db.insert(schema.courses).values([
       {
@@ -84,12 +85,6 @@ const main = async () => {
         order: 5,
         title: "Verbs",
       },
-      {
-        id: 6,
-        unitId: 1, // Unit 1 (Learn the basics...)
-        order: 6,
-        title: "Verbs",
-      },
     ]);
 
     await db.insert(schema.challenges).values([
@@ -98,13 +93,26 @@ const main = async () => {
         lessonId: 1,
         type: "SELECT",
         order: 1,
-        question: 'Which one of this is "a dog"?',
+        question: 'Which one of this "a dog"?',
+      },
+      {
+        id: 2,
+        lessonId: 1,
+        type: "ASSIST",
+        order: 2,
+        question: '"A dog"',
+      },
+      {
+        id: 3,
+        lessonId: 1,
+        type: "SELECT",
+        order: 3,
+        question: 'Which one of this "a cat"?',
       },
     ]);
 
     await db.insert(schema.challengeOptions).values([
       {
-        id: 1,
         challengeId: 1,
         imageSrc: "dog.svg",
         correct: true,
@@ -112,7 +120,6 @@ const main = async () => {
         audioSrc: "/in_dog.mp3",
       },
       {
-        id: 2,
         challengeId: 1,
         imageSrc: "monkey.svg",
         correct: false,
@@ -120,10 +127,55 @@ const main = async () => {
         audioSrc: "/in_monkey.mp3",
       },
       {
-        id: 3,
         challengeId: 1,
         imageSrc: "cat.svg",
         correct: false,
+        text: "बिल्ली",
+        audioSrc: "/in_cat.mp3",
+      },
+    ]);
+    await db.insert(schema.challengeOptions).values([
+      {
+        challengeId: 2,
+        // imageSrc: "dog.svg",
+        correct: true,
+        text: "कुत्ता",
+        audioSrc: "/in_dog.mp3",
+      },
+      {
+        challengeId: 2,
+        // imageSrc: "monkey.svg",
+        correct: false,
+        text: "बंदर",
+        audioSrc: "/in_monkey.mp3",
+      },
+      {
+        challengeId: 2,
+        // imageSrc: "cat.svg",
+        correct: false,
+        text: "बिल्ली",
+        audioSrc: "/in_cat.mp3",
+      },
+    ]);
+    await db.insert(schema.challengeOptions).values([
+      {
+        challengeId: 3,
+        imageSrc: "dog.svg",
+        correct: false,
+        text: "कुत्ता",
+        audioSrc: "/in_dog.mp3",
+      },
+      {
+        challengeId: 3,
+        imageSrc: "monkey.svg",
+        correct: false,
+        text: "बंदर",
+        audioSrc: "/in_monkey.mp3",
+      },
+      {
+        challengeId: 3,
+        imageSrc: "cat.svg",
+        correct: true,
         text: "बिल्ली",
         audioSrc: "/in_cat.mp3",
       },
