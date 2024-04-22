@@ -42,6 +42,11 @@ const main = async () => {
         title: "Croatian",
         imgSrc: "/hr.svg",
       },
+      {
+        id: 6,
+        title: "Spanish",
+        imgSrc: "/es.svg",
+      },
     ]);
 
     await db.insert(schema.units).values([

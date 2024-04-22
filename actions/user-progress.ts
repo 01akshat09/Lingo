@@ -12,6 +12,7 @@ import {
   getUserSubscription,
 } from "@/db/queries";
 import { challengeProgress, challenges, userProgress } from "@/db/schema";
+import { MAX_HEARTS, POINTS_TO_REFILL } from "@/constants";
 
 export const upsertUserProgress = async (courseId: number) => {
   const { userId } = await auth();
@@ -113,10 +114,10 @@ export const refillHearts = async () => {
     throw new Error("User progress not found.");
   }
 
-  if (currentProgress.hearts === 5) {
+  if (currentProgress.hearts === MAX_HEARTS) {
     throw new Error("Hearts are already full.");
   }
-  if (currentProgress.points < 10) {
+  if (currentProgress.points < POINTS_TO_REFILL) {
     throw new Error("Not enough points");
   }
 
@@ -124,7 +125,7 @@ export const refillHearts = async () => {
     .update(userProgress)
     .set({
       hearts: 5,
-      points: currentProgress.points - 10,
+      points: currentProgress.points - POINTS_TO_REFILL,
     })
     .where(eq(userProgress.userId, currentProgress.userId));
 

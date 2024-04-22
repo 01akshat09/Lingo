@@ -6,8 +6,9 @@ import { and, eq } from "drizzle-orm";
 import { auth } from "@clerk/nextjs";
 import { revalidatePath } from "next/cache";
 
-import { getUserProgress } from "@/db/queries";
+import { getUserProgress, getUserSubscription } from "@/db/queries";
 import { challengeProgress, challenges, userProgress } from "@/db/schema";
+import { MAX_HEARTS, POINTS_TO_REFILL } from "@/constants";
 
 export const upsertChallengeProgress = async (challengeId: number) => {
   const { userId } = await auth();
@@ -16,7 +17,7 @@ export const upsertChallengeProgress = async (challengeId: number) => {
   }
 
   const currentUserProgress = await getUserProgress();
-  //   TODO UserSubscription
+  const userSubscription = await getUserSubscription();
 
   if (!currentUserProgress) {
     throw new Error("User Progress not found");
@@ -40,7 +41,11 @@ export const upsertChallengeProgress = async (challengeId: number) => {
 
   const isPractice = !!existingChallengeProgress;
 
-  if (currentUserProgress.hearts === 0 && !isPractice) {
+  if (
+    currentUserProgress.hearts === 0 &&
+    !isPractice &&
+    !userSubscription?.isActive
+  ) {
     return { error: "hearts" };
   }
 
@@ -54,8 +59,8 @@ export const upsertChallengeProgress = async (challengeId: number) => {
     await db
       .update(userProgress)
       .set({
-        hearts: Math.min(currentUserProgress.hearts + 1, 5),
-        points: currentUserProgress.points + 10,
+        hearts: Math.min(currentUserProgress.hearts + 1, MAX_HEARTS),
+        points: currentUserProgress.points + POINTS_TO_REFILL,
       })
       .where(eq(userProgress.userId, userId));
 
@@ -75,7 +80,7 @@ export const upsertChallengeProgress = async (challengeId: number) => {
   await db
     .update(userProgress)
     .set({
-      points: currentUserProgress.points + 10,
+      points: currentUserProgress.points + POINTS_TO_REFILL,
     })
     .where(eq(userProgress.userId, userId));
 
